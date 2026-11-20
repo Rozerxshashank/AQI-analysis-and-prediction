@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE & Notebook checkpoints
+.ipynb_checkpoints
+.vscode/
+.idea/
+
+# Python packaging builds
+dist/
+build/
+*.egg-info/
+
+# Generated / personal / local
+models/
+*.pdf
+.claude/

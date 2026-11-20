@@ -1,0 +1,30 @@
+# Packaging for the sylearn library (pip install sylearn).
+# Only the sylearn/ folder is published. The AQI app (app.py, dashboard/, models/, Data/) is not.
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sylearn"
+version = "0.1.0"
+description = "Linear regression, decision tree and random forest regressors written from scratch in NumPy."
+readme = "sylearn/README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+authors = [{ name = "Shashank" }]
+dependencies = ["numpy>=1.22"]
+keywords = ["machine learning", "from scratch", "linear regression", "decision tree", "random forest", "numpy"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["sylearn"]
+
+[tool.hatch.build.targets.sdist]
+include = ["sylearn/*.py", "sylearn/README.md", "LICENSE", "pyproject.toml"]

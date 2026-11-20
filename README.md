@@ -80,3 +80,56 @@ Rule-Based AQI Health Tier
 Health Advisory
         ↓
 Streamlit Dashboard
+
+## Running it
+
+```bash
+python train.py          # trains the scratch models + sklearn/XGBoost baselines, saves to models/
+streamlit run app.py     # opens the dashboard
+```
+
+## Dashboard (PRD information architecture)
+
+1. **Home / Overview** — project summary, pipeline, CPCB tier scale, model card, scope boundary
+2. **Input & Predict** — manual entry (PM2.5, PM10, NO2, SO2, CO, O3), recorded city/date, batch CSV upload with validation
+3. **Prediction Result** — predicted AQI, tier badge, error band, SHAP top contributing pollutants, health advisory, review flag
+4. **Pollution Map** — Folium heatmap by city, filterable by pollutant, years and season
+5. **Evaluation** — MAE, RMSE, R², actual vs predicted, residual distribution, tier confusion, error cases
+6. **Error Analysis** — missed severe events, large residuals, boundary-tier flips, missing-data errors
+7. **Export** — PDF health advisory, batch predictions CSV, evaluation report JSON
+
+Each prediction moves through `SUBMITTED → PROCESSING → PREDICTED → TIER_MAPPED → COMPLETED / REVIEW_REQUIRED`
+(or `PROCESSING_FAILED` on invalid input). Predictions within ±½ MAE of a tier boundary, with missing inputs,
+or outside the training range are flagged `REVIEW_REQUIRED`.
+
+## Project layout
+
+- `sylearn/` — Linear Regression, Decision Tree and Random Forest written from scratch with NumPy
+- `data.py` — loading, cleaning, outlier capping, median imputation and the city-based train/test split
+- `train.py` — trains every model and records test metrics in `models/results.json`
+- `app.py` — Streamlit entry point and navigation
+- `dashboard/tiers.py` — rule-based CPCB health-tier mapper (if/elif thresholds) and advisory text
+- `dashboard/core.py` — prediction pipeline: validation, imputation, prediction, tiering, SHAP, error band, review flags, batch scoring
+- `dashboard/report.py` — PDF report
+- `dashboard/views/` — the seven screens
+- `notebooks/01_eda.ipynb` — EDA and model experiments
+
+## Data cleaning and its effect
+
+Chosen by a controlled experiment: same six held-out cities, same 5,331 valid test days, only the preprocessing changes.
+
+| Setup | Scratch RF R² | Scratch RF MAE | Scratch LR R² | XGBoost R² |
+|---|---|---|---|---|
+| No cleaning, 5 pollutants | 0.883 | 23.2 | 0.816 | 0.849 |
+| Drop AQI > 500, CO = 0 → missing, cap at train 99.5th pct | 0.888 | 21.8 | 0.848 | 0.847 |
+| … and also delete CO > 10 mg/m³ | 0.864 | 25.3 | 0.791 | 0.807 |
+| **Cleaning + PM10 (final)** | **0.914** | **19.9** | **0.885** | **0.892** |
+
+- **AQI > 500** (543 rows, mostly Ahmedabad) is off the CPCB scale, so those rows are dropped.
+- **CO = 0** (768 rows with valid AQI) is a missing-value code, not a measurement.
+- **High CO** is capped, not deleted — deleting it made every model worse, so those readings carry real signal.
+- **PM10** is kept despite 37.7% missingness: CPCB AQI is the maximum pollutant sub-index, and PM10 is the
+  deciding sub-index on 65% of days that report both particulates.
+- **Split by city** (Mumbai, Patna, Shillong, Talcher, Thiruvananthapuram, Visakhapatnam held out). The earlier
+  row-order split cut Mumbai in half across train and test.
+- **Known limitation:** the March–May 2020 COVID lockdown lowered mean AQI from 149 to 88 versus the same months in 2019.
