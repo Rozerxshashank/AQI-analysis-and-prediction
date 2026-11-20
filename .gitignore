@@ -26,3 +26,5 @@ build/
 *.egg-info/
 
 # Personal / local
+*.pdf
+.claude/

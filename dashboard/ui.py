@@ -27,9 +27,15 @@ CSS = """
 [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"]) {
   background: #FFFFFF; border-radius: 16px !important; box-shadow: 0 1px 2px rgba(20,22,28,.04), 0 8px 24px rgba(20,22,28,.05);
 }
-[data-testid="stMetric"] { background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 14px; padding: 14px 16px; }
-[data-testid="stMetricValue"] { font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: -0.02em; }
-[data-testid="stMetricLabel"] p { color: #6B7280; font-size: 0.82rem; }
+[data-testid="stMetric"] { background: #FFFFFF; border: 1px solid #E3E0D8; border-radius: 14px; padding: 14px 16px;
+  container-type: inline-size; }
+/* Size the number to the tile's own width (cqi = 1% of the tile), capped at Streamlit's normal 2.25rem,
+   and let values/labels wrap instead of being cut off with "…" on narrow screens. */
+[data-testid="stMetricValue"] { font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: -0.02em;
+  font-size: clamp(1.15rem, 22cqi, 2.25rem); line-height: 1.15; }
+[data-testid="stMetricValue"] *, [data-testid="stMetricLabel"] * {
+  white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+[data-testid="stMetricLabel"] p { color: #6B7280; font-size: 0.82rem; line-height: 1.3; }
 .stTabs [data-baseweb="tab-list"] { gap: 4px; }
 .stTabs [data-baseweb="tab"] { padding: 8px 14px; border-radius: 10px 10px 0 0; font-weight: 600; }
 div[data-testid="stDownloadButton"] button, div[data-testid="stButton"] button { border-radius: 10px; font-weight: 600; }
