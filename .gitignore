@@ -25,7 +25,4 @@ dist/
 build/
 *.egg-info/
 
-# Generated / personal / local
-models/
-*.pdf
-.claude/
+# Personal / local

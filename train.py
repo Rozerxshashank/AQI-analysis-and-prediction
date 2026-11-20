@@ -35,7 +35,7 @@ def main():
     np.random.seed(42)
     MODELS_DIR.mkdir(exist_ok=True)
     X_train, X_test, y_train, y_test, pre = train_test_data()
-    joblib.dump(pre, MODELS_DIR / "preprocessor.joblib")
+    joblib.dump(pre, MODELS_DIR / "preprocessor.joblib", compress=3)
     (MODELS_DIR / "imputer.joblib").unlink(missing_ok=True)  # replaced by preprocessor.joblib
 
     raw = load_dataset()
@@ -61,7 +61,7 @@ def main():
         model.fit(X_train, y_train)
         seconds = time.time() - start
         pred = model.predict(X_test)
-        joblib.dump(model, MODELS_DIR / f"{key}.joblib")
+        joblib.dump(model, MODELS_DIR / f"{key}.joblib", compress=3)  # compressed: keeps every file well under GitHub's 100 MB limit
         report["models"][key] = {
             "name": name,
             "family": family,
