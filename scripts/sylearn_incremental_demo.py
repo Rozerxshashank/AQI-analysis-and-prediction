@@ -55,7 +55,7 @@ sk_time = time.perf_counter() - t
 
 diff = max(np.max(np.abs(inc.weights - full.weights)), abs(inc.intercept_ - full.intercept_))
 print(f"sylearn partial_fit, one day at a time : {sy_time * 1000:7.0f} ms total, "
-      f"{sy_time / len(days) * 1e6:5.0f} µs per day, keeps {inc.xtx_.size + inc.xty_.size} numbers")
+      f"{sy_time / len(days) * 1e6:5.0f} µs per day, keeps {inc.xtx.size + inc.xty.size} numbers")
 print(f"sklearn LinearRegression, retrain daily: {sk_time * 1000:7.0f} ms total, "
       f"keeps all {len(y_all):,} rows x {len(FEATURES)} features")
 print(f"Largest difference from one-shot training: {diff:.1e}  (exact, up to rounding)")
@@ -69,7 +69,7 @@ merged = None
 for m in city_models.values():
     merged = m if merged is None else merged.merge(m)
 diff = max(np.max(np.abs(merged.weights - full.weights)), abs(merged.intercept_ - full.intercept_))
-print(f"{len(city_models)} city models merged; each city shared only {merged.xtx_.size + merged.xty_.size} numbers, "
+print(f"{len(city_models)} city models merged; each city shared only {merged.xtx.size + merged.xty.size} numbers, "
       "no readings.")
 print(f"Largest difference from training on all cities' data together: {diff:.1e}")
 print(f"Test R²: merged {r2_score(y_test, merged.predict(X_test)):.4f} | "
