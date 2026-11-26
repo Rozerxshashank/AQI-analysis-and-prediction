@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>sylearn</title>
+  <meta name="description" content="sylearn: machine learning from scratch, built to understand India's air.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="bar">
+    <a class="logo" href="#top">sylearn</a>
+    <div class="bar-links">
+      <a href="#map">Map</a>
+      <a href="#city">Cities</a>
+      <a href="#learn">Learns</a>
+      <a href="#merge">Merges</a>
+      <a href="#accuracy">Accuracy</a>
+      <a href="#try">Try it</a>
+      <a href="/predict">AQI Predictor</a>
+    </div>
+    <a class="bar-cta" href="/predict">Check your air</a>
+  </nav>
+
+  <!-- 1 · HERO -->
+  <section class="scene hero" id="top" style="--h: 220vh">
+    <div class="sticky">
+      <p class="kicker reveal-up">Machine learning, from scratch.</p>
+      <h1 class="mega reveal-up" style="--d:.08s">sylearn<span class="dotmark">.</span></h1>
+      <p class="tag reveal-up" style="--d:.16s">Built to understand the air India breathes.</p>
+      <div class="hero-ctas reveal-up" style="--d:.24s">
+        <a class="pill dark" href="/predict">Check your air</a>
+        <a class="pill ghost" href="#try">Try it live</a>
+        <button class="pill ghost" id="pipHero"><span class="mono">pip install sylearn</span></button>
+      </div>
+      <div class="device-stage">
+        <div class="device" id="device">
+          <div class="device-screen">
+            <div class="ds-top"><span>Delhi · typical day</span><span class="mono">sylearn · forest</span></div>
+            <div class="ds-aqi" id="devAqi">–</div>
+            <div class="ds-tier" id="devTier">–</div>
+            <div class="ds-scale"><i id="devMark"></i></div>
+            <div class="ds-rows" id="devRows"></div>
+          </div>
+        </div>
+        <div class="device-glow" id="devGlow"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · THE PROBLEM -->
+  <section class="scene light" style="--h: 180vh">
+    <div class="sticky center">
+      <p class="kicker">On an average day</p>
+      <h2 class="huge"><span class="grad-air">India's capital</span><br>breathes <span class="count mono-ish" data-to="252" id="delhiNum">0</span>.</h2>
+      <p class="tag dim">On the Air Quality Index, that's <b>Poor</b>: breathing discomfort for most people.<br>26 cities. 29,531 days of readings. One question: how bad is the air?</p>
+    </div>
+  </section>
+
+  <!-- 2b · WHAT THE NUMBER MEANS -->
+  <section class="tiers-sec" id="aqi">
+    <div class="sec-head">
+      <p class="kicker">The Air Quality Index</p>
+      <h2 class="huge">Six colours.<br><span class="grad-air">One number.</span></h2>
+      <p class="tag dim">India's CPCB turns a day of pollution into one number from 0 to 500. Here's what each range means for your body.</p>
+    </div>
+    <div class="tiers" id="tiers"></div>
+  </section>
+
+  <!-- 2c · MAP -->
+  <section class="map-sec" id="map">
+    <div class="sec-head">
+      <p class="kicker">26 cities · 2015–2020</p>
+      <h2 class="huge">Where India<br><span class="grad-air">can't breathe.</span></h2>
+    </div>
+    <div class="map-wrap">
+      <div id="mapBox" role="region" aria-label="Map of Indian cities by air quality"></div>
+      <div class="map-panel">
+        <div class="seg small" id="metricSeg" aria-label="Measure shown on the map"></div>
+        <p class="mp-title" id="mpTitle">Worst average AQI</p>
+        <ol class="mp-list" id="mpList"></ol>
+        <p class="mp-note" id="mpNote">Tap a city to open its story.</p>
+      </div>
+    </div>
+    <div class="map-legend" id="mapLegend"></div>
+  </section>
+
+  <!-- 2d · CITY STORY -->
+  <section class="city-sec light" id="city">
+    <div class="sec-head">
+      <p class="kicker">Every city has a season</p>
+      <h2 class="huge" id="cityTitle">Delhi.</h2>
+      <div class="city-pick"><div class="select-wrap light-select"><select id="citySelect" aria-label="Choose a city"></select></div></div>
+    </div>
+    <div class="city-kpis" id="cityKpis"></div>
+    <div class="city-cards">
+      <div class="work-card"><h3>Month by month</h3><svg id="cityTrend" class="trend" aria-label="Monthly average AQI"></svg></div>
+      <div class="work-card"><h3>The seasons, year after year</h3><div class="heat" id="cityHeat"></div><p class="dim small-note">Each square is one month's average AQI. Winters glow red; the monsoon washes the air clean.</p></div>
+    </div>
+  </section>
+
+  <!-- 3 · LEARNS EVERY DAY -->
+  <section class="scene" id="learn" style="--h: 320vh">
+    <div class="sticky center">
+      <p class="kicker">Incremental learning</p>
+      <h2 class="huge" id="learnTitle">Learns.<br><span class="grad-air">Every. Day.</span></h2>
+      <div class="learn-stage">
+        <div class="learn-counter"><span class="mono-ish" id="dayNum">1</span><small>days learned</small></div>
+        <svg id="learnChart" class="learn-chart" aria-label="Accuracy while learning day by day"></svg>
+        <div class="learn-legend"><span><i class="lg sy"></i>sylearn · exact</span><span><i class="lg sk"></i>scikit-learn SGD · approximate</span></div>
+      </div>
+      <div class="punch" id="learnPunch">
+        <div class="punch-big mono-ish" id="usNum">16 µs</div>
+        <p class="tag">to learn a whole new day. scikit-learn's <code>LinearRegression</code> has to start over.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · 56 NUMBERS -->
+  <section class="scene light" style="--h: 300vh">
+    <div class="sticky center">
+      <p class="kicker">Memory</p>
+      <h2 class="huge"><span class="mono-ish" id="memNum">18,976</span> <span id="memWord">readings.</span></h2>
+      <canvas id="dots" class="dots" aria-label="18,976 readings collapsing into 56 numbers"></canvas>
+      <p class="tag dim" id="memTag">sylearn doesn't keep the data. It keeps two running totals, XᵀX and Xᵀy. The whole history fits in 56 numbers.</p>
+    </div>
+  </section>
+
+  <!-- 5 · MERGE -->
+  <section class="scene" id="merge" style="--h: 300vh">
+    <div class="sticky center">
+      <p class="kicker">Federated by design</p>
+      <h2 class="huge">Twenty cities.<br><span class="grad-air">One model.</span></h2>
+      <div class="orbit" id="orbit"></div>
+      <div class="merge-out" id="mergeOut">
+        <p class="tag">Each city trains alone. Raw readings never leave. <code>merge()</code> combines them into exactly the model you'd get from all the data.</p>
+        <div class="tiny-stat"><span>Difference from training on everything</span><b class="mono-ish" id="mergeGap">–</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · ACCURACY -->
+  <section class="scene light statscene" id="accuracy" style="--h: 140vh">
+    <div class="sticky center">
+      <p class="kicker">sylearn Random Forest vs scikit-learn</p>
+      <h2 class="huge">As accurate.<br><span class="grad-air">Thousands of times smaller.</span></h2>
+      <div class="stats">
+        <div class="stat"><b class="mono-ish count" data-to="0.911" data-dec="3">0</b><span>R² on cities it never saw</span><small>sklearn: <span id="skR2">0.915</span></small></div>
+        <div class="stat"><b class="mono-ish"><span class="count" data-to="27" data-dec="0">0</span> KB</b><span>model size</span><small>sklearn default: <span id="skSize">161 MB</span></small></div>
+        <div class="stat"><b class="mono-ish"><span class="count" data-to="0.01" data-dec="2">0</span> ms</b><span>to predict one reading</span><small>sklearn default: <span id="skMs">14 ms</span></small></div>
+        <div class="stat"><b class="mono-ish"><span class="count" data-to="20.1" data-dec="1">0</span></b><span>average error (MAE)</span><small>sklearn default: <span id="skMae">20.4</span></small></div>
+      </div>
+      <p class="tag dim small">Linear Regression and Decision Tree match scikit-learn's predictions exactly. scikit-learn still trains much faster.</p>
+    </div>
+  </section>
+
+  <!-- 7 · NEVER SEEN -->
+  <section class="scene" style="--h: 140vh">
+    <div class="sticky center">
+      <p class="kicker">Tested honestly</p>
+      <h2 class="huge">Six cities it<br><span class="grad-air">never saw.</span></h2>
+      <div class="cityroll" id="cityRoll"></div>
+      <p class="tag dim">Trained on 20 cities. Scored on 5,331 days from these six. Right health tier on 74% of days, within one tier on 99%.</p>
+    </div>
+  </section>
+
+  <!-- 8 · TRY IT -->
+  <section class="try" id="try">
+    <div class="try-head">
+      <p class="kicker">Your turn</p>
+      <h2 class="huge">Change the air.<br><span class="grad-air">Watch it think.</span></h2>
+      <p class="tag dim">Want to check a real reading, a city, or a whole CSV of them? <a class="link-go" href="/predict">Open the AQI Predictor →</a></p>
+    </div>
+    <div class="try-grid">
+      <div class="readout" id="readout">
+        <div class="ro-glow" id="roGlow"></div>
+        <div class="ro-model">
+          <div class="seg" id="famSeg"></div>
+          <div class="seg small" id="libSeg"><button data-b="sy" class="on">sylearn</button><button data-b="sk">scikit-learn</button></div>
+        </div>
+        <div class="ro-aqi mono-ish" id="aqiValue">–</div>
+        <div class="ro-tier" id="tierName">–</div>
+        <p class="ro-health" id="healthText"></p>
+        <div class="ro-scale"><i id="scaleMark"></i></div>
+        <div class="ro-actions">
+          <div class="select-wrap"><select id="cityPreset" aria-label="Load a city's typical day"><option value="">A typical day in…</option></select></div>
+          <button class="pill dark" id="sampleBtn">A real day</button>
+        </div>
+        <p class="ro-real" id="realDay"></p>
+      </div>
+      <div class="sliders" id="sliders"></div>
+    </div>
+    <p class="err" id="predictError" role="alert"></p>
+  </section>
+
+  <!-- 9 · SHOWS ITS WORK -->
+  <section class="work">
+    <div class="work-head">
+      <p class="kicker">Explainable</p>
+      <h2 class="huge">It shows its work.</h2>
+      <p class="tag dim">For the air you just set, here is what each pollutant added, and the questions the decision tree asked.</p>
+    </div>
+    <div class="work-grid">
+      <div class="work-card">
+        <h3>What pushed the number up</h3>
+        <div id="contrib"></div>
+      </div>
+      <div class="work-card">
+        <h3>The tree's questions</h3>
+        <ol class="path" id="treePath"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · CLOSE -->
+  <section class="close">
+    <h2 class="mega">pip install<br><span class="grad-air">sylearn</span></h2>
+    <div class="hero-ctas"><a class="pill dark" href="/predict">Open the AQI Predictor</a>
+    <button class="pill light-pill" id="pipClose"><span class="mono">pip install sylearn</span> · Copy</button></div>
+    <p class="tag dim small">Linear Regression, Decision Tree and Random Forest in NumPy. Version 0.2.1 adds exact <code>partial_fit()</code> and <code>merge()</code>.<br>Data: Air Quality Data in India (2015–2020), Kaggle · CPCB AQI tiers · Decision support, not a certified monitor.</p>
+  </section>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

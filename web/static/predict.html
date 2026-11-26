@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AQI Predictor</title>
+  <meta name="description" content="Check any day's air quality in seconds: AQI, health tier, likely range and advice, from sylearn.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/predict.css">
+</head>
+<body class="app">
+  <nav class="bar">
+    <a class="logo" href="/">sylearn</a>
+    <div class="bar-links">
+      <a href="/">Overview</a>
+      <a href="/predict" class="here">AQI Predictor</a>
+    </div>
+    <a class="bar-cta" href="/#learn">How it works</a>
+  </nav>
+
+  <header class="app-head">
+    <p class="kicker">AQI Predictor</p>
+    <h1 class="huge">Check the air.<br><span class="grad-air">In seconds.</span></h1>
+    <p class="tag dim">Enter what a sensor measured, or pick a city. Get the AQI, what it means for your health, and how sure the model is.</p>
+    <div class="modes seg" id="modes" role="tablist" aria-label="How to check">
+      <button data-mode="manual" class="on" role="tab">Enter readings</button>
+      <button data-mode="city" role="tab">A city's typical day</button>
+      <button data-mode="real" role="tab">A real recorded day</button>
+      <button data-mode="batch" role="tab">Upload a CSV</button>
+    </div>
+  </header>
+
+  <!-- single reading -->
+  <main class="app-grid" id="single">
+    <section class="card input-card" aria-label="Readings">
+      <div class="mode-intro" id="modeIntro"></div>
+      <div class="row-2" id="cityRow" hidden>
+        <label class="field"><span>City</span><div class="select-wrap"><select id="citySel"></select></div></label>
+      </div>
+      <div class="row-2" id="realRow" hidden>
+        <button class="pill dark" id="realBtn">Load a random real day</button>
+        <span class="dim small" id="realInfo">From the 6 cities the model never trained on.</span>
+      </div>
+      <div class="fields" id="fields"></div>
+      <div class="row-2 meta-row">
+        <label class="field"><span>Model</span><div class="select-wrap"><select id="modelSel"></select></div></label>
+        <label class="field"><span>Place (optional)</span><input id="placeIn" type="text" placeholder="e.g. School, Sector 12" maxlength="60"></label>
+      </div>
+      <div class="actions">
+        <button class="pill dark big" id="checkBtn">Check air quality</button>
+        <button class="pill ghost" id="clearBtn">Clear</button>
+      </div>
+      <p class="err" id="err" role="alert"></p>
+      <div class="history" id="historyBox" hidden>
+        <h3>Recent checks</h3>
+        <ul id="history"></ul>
+      </div>
+    </section>
+
+    <section class="card result-card" id="result" aria-live="polite">
+      <div class="empty" id="empty">
+        <div class="empty-ring"></div>
+        <p class="empty-title">Your result appears here.</p>
+        <p class="dim">Fill in at least one pollutant and press <b>Check air quality</b>.</p>
+      </div>
+      <div id="full" hidden>
+        <div class="res-top">
+          <div>
+            <p class="res-place" id="resPlace"></p>
+            <div class="res-aqi" id="resAqi">–</div>
+            <div class="res-tier" id="resTier">–</div>
+          </div>
+          <div class="res-range">
+            <span>Likely range</span><b id="resRange">–</b>
+            <small id="resModel"></small>
+          </div>
+        </div>
+        <div class="ro-scale res-scale"><i id="resMark"></i></div>
+        <div class="status" id="resStatus"></div>
+        <p class="actual" id="resActual" hidden></p>
+
+        <h3 class="res-h">What it means</h3>
+        <div class="advice">
+          <div><span>Health</span><p id="advHealth"></p></div>
+          <div><span>Everyone</span><p id="advPublic"></p></div>
+          <div><span>Sensitive groups</span><p id="advSensitive"></p><small>Children, older adults, people with asthma, heart or lung disease</small></div>
+        </div>
+
+        <h3 class="res-h">What drove it</h3>
+        <div id="drivers"></div>
+
+        <h3 class="res-h">Every model, same air</h3>
+        <div class="allmodels" id="allModels"></div>
+
+        <div class="res-actions">
+          <button class="pill dark" id="printBtn">Save as PDF</button>
+          <button class="pill ghost" id="copyBtn">Copy summary</button>
+        </div>
+        <p class="fine">Decision support from historical CPCB data (2015–2020). Not a certified monitor and not medical advice.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- batch -->
+  <main class="batch" id="batch" hidden>
+    <section class="card">
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Upload a CSV file">
+        <div class="drop-icon">⇪</div>
+        <p class="drop-title">Drop a CSV here, or click to choose</p>
+        <p class="dim">Columns: PM2.5, PM10, NO2, SO2, CO, O3 (any you have) and optional City, Date. Up to 20,000 rows.</p>
+        <input type="file" id="fileIn" accept=".csv,text/csv" hidden>
+      </div>
+      <div class="actions center">
+        <button class="pill ghost" id="templateBtn">Download a template</button>
+        <label class="field inline"><span>Model</span><div class="select-wrap"><select id="batchModel"></select></div></label>
+      </div>
+      <p class="err" id="batchErr" role="alert"></p>
+    </section>
+
+    <section class="card" id="batchOut" hidden>
+      <div class="batch-stats" id="batchStats"></div>
+      <div class="tierbar" id="tierBar"></div>
+      <div class="tierlegend" id="tierLegend"></div>
+      <div class="actions center"><button class="pill dark" id="downloadBtn">Download results (CSV)</button></div>
+      <div class="table-wrap"><table class="results" id="batchTable"></table></div>
+      <p class="dim small center" id="batchNote"></p>
+    </section>
+  </main>
+
+  <footer class="app-foot">
+    <a href="/">← Back to the sylearn overview</a>
+    <span class="dim">AQI tiers and advice follow India's CPCB National Air Quality Index.</span>
+  </footer>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/static/predict.js"></script>
+</body>
+</html>
