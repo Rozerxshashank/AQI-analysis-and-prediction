@@ -38,12 +38,22 @@ page = st.navigation({
 
 # ---- sidebar: interchangeable regression model (PRD LLD: Strategy pattern)
 art = core.load_artifacts()
+# The chosen model lives in `model_key`, a plain session value. The dropdown uses its own key
+# (`_model_pick`) and is re-seeded from `model_key` on every run: Streamlit can wipe a widget's
+# own state when the app switches pages in code (st.switch_page), which used to reset the sidebar.
 if "model_key" not in st.session_state:
     st.session_state.model_key = core.DEFAULT_MODEL
+st.session_state._model_pick = st.session_state.model_key
+
+
+def _on_model_change():
+    st.session_state.model_key = st.session_state._model_pick
+
+
 with st.sidebar:
     st.markdown("<div class='aq-eyebrow' style='margin-top:4px'>Regression model</div>", unsafe_allow_html=True)
     st.selectbox("Regression model", list(core.MODEL_LABELS), format_func=core.MODEL_LABELS.get,
-                 key="model_key", label_visibility="collapsed")
+                 key="_model_pick", on_change=_on_model_change, label_visibility="collapsed")
     m = art["results"]["models"][st.session_state.model_key]
     st.markdown(f"<div class='aq-muted aq-mono' style='font-size:12px;line-height:1.7'>{art['versions'][st.session_state.model_key]}<br>"
                 f"test R² {m['R2']:.3f} · MAE {m['MAE']:.1f} · RMSE {m['RMSE']:.1f}</div>", unsafe_allow_html=True)
