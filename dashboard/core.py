@@ -157,8 +157,10 @@ def validate_reading(values: dict) -> tuple[dict, list[str]]:
         elif v > PLAUSIBLE_MAX[p]:
             errors.append(f"{p} = {v:g} {UNITS[p]} is outside the plausible range (0–{PLAUSIBLE_MAX[p]}).")
         clean[p] = v
-    if all(clean.get(f) is None for f in FEATURES):
-        errors.append("Enter at least one of the model's pollutants: " + ", ".join(FEATURES) + ".")
+    # CO = 0 counts as "not measured" (same rule as training), so it doesn't count as an entered value.
+    if all(clean.get(f) is None or (f == "CO" and clean.get(f) == 0) for f in FEATURES):
+        errors.append("Enter at least one of the model's pollutants: " + ", ".join(FEATURES)
+                      + " (CO = 0 counts as not measured).")
     return clean, errors
 
 
@@ -257,7 +259,8 @@ def read_csv_upload(uploaded) -> tuple[pd.DataFrame | None, list[str]]:
         return None, ["The file has no data rows."]
     if len(df) > MAX_ROWS:
         return None, [f"{len(df):,} rows is over the {MAX_ROWS:,}-row limit. Split the file and upload in parts."]
-    df = df.rename(columns={c: COLUMN_ALIASES.get(c.strip().lower(), c.strip()) for c in df.columns})
+    df = df.rename(columns={c: COLUMN_ALIASES.get(str(c).strip().lower(), str(c).strip()) for c in df.columns})
+    df = df.loc[:, ~df.columns.duplicated()]   # e.g. both "PM2.5" and "pm25": keep the first
     present = [f for f in FEATURES if f in df.columns]
     if not present:
         return None, [f"No pollutant columns found. Expected at least one of: {', '.join(FEATURES)} "
@@ -273,10 +276,15 @@ def predict_batch(df: pd.DataFrame, model_key: str, progress=None) -> tuple[pd.D
         work[f] = pd.to_numeric(work[f], errors="coerce") if f in work.columns else np.nan
     usable = work[FEATURES].notna().any(axis=1)
     negative = (work[FEATURES] < 0).any(axis=1)
-    keep = usable & ~negative
-    skipped = {"no pollutant values": int((~usable).sum()), "negative values": int((usable & negative).sum())}
+    implausible = (work[FEATURES] > pd.Series({f: PLAUSIBLE_MAX[f] for f in FEATURES})).any(axis=1)  # also catches inf
+    keep = usable & ~negative & ~implausible
+    skipped = {"no pollutant values": int((~usable).sum()), "negative values": int((usable & negative).sum()),
+               "implausible values": int((usable & ~negative & implausible).sum())}
 
     rows = work[keep].copy()
+    if rows.empty:  # nothing usable: report it instead of crashing
+        return rows, {"rows_total": len(df), "rows_scored": 0, "skipped": skipped, "review_required": 0,
+                      "tiers": {}, "model_version": art["versions"][model_key], "processed_at": datetime.now()}
     X = pre.transform(rows[FEATURES])
     preds = np.empty(len(rows))
     chunk = 500

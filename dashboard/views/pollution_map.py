@@ -82,3 +82,6 @@ def render():
                         .update_xaxes(range=[0, values["mean"].max() * 1.18]), width="stretch", config=ui.CHART_CONFIG)
         if metric != "AQI":
             st.caption("Red bars exceed the CPCB 24-hour safe limit on average.")
+        else:
+            st.caption("Recorded history, before cleaning: these averages include the AQI readings above 500 "
+                       "(mostly Ahmedabad) that were removed before training the models.")

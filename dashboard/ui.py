@@ -169,11 +169,12 @@ SCOPE_TEXT = ("<b>Scope boundary.</b> Predictions are decision-support estimates
 
 def style_fig(fig: go.Figure, height=360, legend=False) -> go.Figure:
     fig.update_layout(
-        height=height, margin=dict(l=8, r=8, t=36, b=8), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        height=height, margin=dict(l=8, r=8, t=36, b=78 if legend else 8), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Inter, system-ui, sans-serif", size=12, color=INK2), showlegend=legend,
         title=dict(font=dict(size=14, color=INK), x=0, xanchor="left"),
         hoverlabel=dict(bgcolor=INK, font=dict(color="#fff", family="Inter")),
-        legend=dict(orientation="h", y=1.08, x=0, font=dict(size=11)),
+        # legend sits under the chart so it never collides with the title
+        legend=dict(orientation="h", yanchor="top", y=-0.2, x=0, font=dict(size=11)),
     )
     fig.update_xaxes(gridcolor="#ECE9E1", zerolinecolor="#D6D2C8", linecolor=LINE, tickfont=dict(family="JetBrains Mono", size=10))
     fig.update_yaxes(gridcolor="#ECE9E1", zerolinecolor="#D6D2C8", linecolor=LINE, tickfont=dict(family="JetBrains Mono", size=10))

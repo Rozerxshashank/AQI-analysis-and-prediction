@@ -80,9 +80,14 @@ def _recorded():
                    f"({days.index.min():%d %b %Y} – {days.index.max():%d %b %Y}).")
         return
     row = days.loc[ts]
-    held_out = df[(df["City"] == city) & (df["Date"] == ts)].index[0] in test_idx
-    st.markdown(f"<span class='aq-muted'>{'Held-out day — the model never trained on it.' if held_out else 'This day was part of the training data.'}</span>",
-                unsafe_allow_html=True)
+    idx = df[(df["City"] == city) & (df["Date"] == ts)].index[0]
+    if row[TARGET] > 500:
+        note = "Recorded AQI is above 500 (off the CPCB scale), so this day was removed during cleaning and not used for training or testing."
+    elif idx in test_idx:
+        note = "Held-out day — the model never trained on it."
+    else:
+        note = "This day was part of the training data."
+    st.markdown(f"<span class='aq-muted'>{note}</span>", unsafe_allow_html=True)
     st.dataframe(pd.DataFrame([{p: row[p] for p in core.ALL_POLLUTANTS}]), hide_index=True, width="stretch",
                  column_config={p: st.column_config.NumberColumn(f"{p} ({core.UNITS[p]})", format="%.2f") for p in core.ALL_POLLUTANTS})
     if st.button("Predict this day", type="primary", icon=":material/play_arrow:"):
@@ -117,10 +122,16 @@ def _batch():
         bar = st.progress(0.0, text="Processing…")
         rows, summary = core.predict_batch(df, st.session_state.model_key, progress=lambda p: bar.progress(p, text=f"Processing… {p:.0%}"))
         bar.progress(1.0, text="Done")
-        st.session_state.batch = {"rows": rows, "summary": summary, "filename": up.name}
+        if summary["rows_scored"] == 0:
+            reasons = ", ".join(f"{v} {k}" for k, v in summary["skipped"].items() if v)
+            st.error(f"**No rows could be scored.** Every row was unusable ({reasons}). "
+                     "Check that pollutant values are plain non-negative numbers.")
+            st.session_state.pop("batch", None)
+            return
+        st.session_state.batch = {"rows": rows, "summary": summary, "filename": up.name, "file_id": up.file_id}
 
     batch = st.session_state.get("batch")
-    if batch and batch["filename"] == up.name:
+    if batch and batch.get("file_id") == up.file_id:   # same upload, not just the same filename
         s, rows = batch["summary"], batch["rows"]
         skipped = sum(s["skipped"].values())
         st.success(f"Scored {s['rows_scored']:,} of {s['rows_total']:,} rows with `{s['model_version']}`."
