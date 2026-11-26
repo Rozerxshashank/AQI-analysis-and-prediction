@@ -1,0 +1,17 @@
+# systemd service: keeps the AQI web app running and restarts it after a crash or reboot.
+# Copy to /etc/systemd/system/aqi-web.service
+[Unit]
+Description=sylearn AQI web app
+After=network.target
+
+[Service]
+User=aqi
+WorkingDirectory=/home/aqi/AQI-analysis-and-prediction
+Environment=HOST=127.0.0.1
+Environment=PORT=8000
+ExecStart=/home/aqi/AQI-analysis-and-prediction/.venv/bin/python web/server.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
