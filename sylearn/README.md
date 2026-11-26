@@ -37,6 +37,33 @@ print(forest.predict(X[:5]))
 
 `X` can be a NumPy array, a list of lists or a pandas DataFrame. `y` is a 1-D array.
 
+## Learn as data arrives, and merge models (new in 0.2)
+
+scikit-learn's `LinearRegression` can only be trained on all the data at once. `syLinearRegression` can also:
+
+- **`partial_fit(X, y)`**: learn from a new batch (a new day, a new file) without keeping or re-reading old data.
+- **`merge(other)`**: combine two models trained on different data into the model you would get by training on both together. The raw data never has to be moved.
+
+Both are **exact**: the weights equal a normal `fit()` on all the data. Linear regression only needs two running
+sums of the data (XᵀX and Xᵀy), which can be updated batch by batch and added across models. Memory stays at
+(features + 1)² numbers however much data you have.
+
+```python
+daily = syLinearRegression()
+for X_day, y_day in stream_of_days:          # e.g. one batch of readings per day
+    daily.partial_fit(X_day, y_day)          # no retraining, no stored history
+
+delhi = syLinearRegression().partial_fit(X_delhi, y_delhi)
+mumbai = syLinearRegression().partial_fit(X_mumbai, y_mumbai)
+combined = delhi.merge(mumbai)               # same as training on both cities' data together
+```
+
+On the AQI data (18,976 readings, 20 cities, 2,009 days) learning each day takes about 16 µs and matches one-shot
+training to within 1e-11. scikit-learn's incremental regressors (`SGDRegressor`, `PassiveAggressiveRegressor`,
+`MLPRegressor`) learn by gradient steps, so they are approximate and need tuning: `SGDRegressor` reached R² 0.880
+with feature scaling and diverged without it; `syLinearRegression` reaches 0.885 with no tuning.
+`partial_fit` and `merge` are available for linear regression only.
+
 ## Good to know
 
 - The decision tree tries every possible split, so training gets slow on large datasets (tens of thousands of rows).

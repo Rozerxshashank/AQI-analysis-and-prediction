@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sylearn"
-version = "0.1.0"
+version = "0.2.0"
 description = "Linear regression, decision tree and random forest regressors written from scratch in NumPy."
 readme = "sylearn/README.md"
 license = "MIT"
